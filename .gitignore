@@ -1,0 +1,13 @@
+# folders ignored
+drone/
+detritus/
+__pycache__/
+
+# files ignored
+activate
+.vim
+.vscode
+
+# extensions ignored
+.jpg
+.png
