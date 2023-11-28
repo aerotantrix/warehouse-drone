@@ -18,8 +18,14 @@ import zxingcpp
 class QrReader: 
 
     def get_type(self, qr_value):       # parses string and returs type
-        qr_type = qr_value      # to be decided
-        return qr_type
+        if qr_value[:1] == "l":
+            return "location"
+        elif qr_value[:1] == "r":
+            return "row"
+        elif qr_value[:1] == "c":
+            return "column"
+        elif qr_value[:1] == "i":
+            return "item"
 
 
     def classify(self):
