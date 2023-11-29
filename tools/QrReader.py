@@ -15,6 +15,7 @@
 '''
 
 import zxingcpp
+from datetime import datetime
 
 class QrReader: 
 
@@ -34,7 +35,7 @@ class QrReader:
         results = zxingcpp.read_barcodes(img)   # calls the barcode reader fn.
 
         for result in results:  # might return multiple readings, uses o/p from FIRST one
-            return (self.get_type(result.text), result.text)      # returns type, value
+            return (self.get_type(result.text), result.text, datetime.now())      # returns type, value
             
         if len(results) == 0:       # returs none type if qr not found
             return
