@@ -13,7 +13,6 @@ import queue
 # camera
 from tools.QrReader import QrReader
 import cv2
-from datetime import datetime
  
 
 
@@ -36,8 +35,7 @@ def camera_runner(camera_output):
         if success:     # calls this only if image is retrieved
             result = camera.classify(img)       # calls classify passing the array as arg
             if result is not None and result not in visited_list:
-                timestamp = datetime.now()
-                camera_output.put(result.append(timestamp))       # writes to the camera_output queue to be processed later
+                camera_output.put(result)       # writes to the camera_output queue to be processed later
                 visited_list.append(result)         # logs data already retrieved
 
 
