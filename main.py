@@ -29,9 +29,10 @@ def camera_runner(camera_output, cap):
     cap = cv2.VideoCapture(0)   # calls VideoCapture and stores image in cap
     while True:
         success, img = cap.read()   # cap gets converted to numpy array
-        result = camera.classify(img)   # calls classify passing the array as arg
-        if result is not None:
-            camera_output.append(result)    # writes to the camera_output list to be processed later
+        if success:     # calls this only if image is retrieved
+            result = camera.classify(img)   # calls classify passing the array as arg
+            if result is not None:
+                camera_output.append(result)    # writes to the camera_output list to be processed later
 
 
 
