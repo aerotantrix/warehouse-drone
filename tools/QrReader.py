@@ -6,13 +6,14 @@
 
     Methods:
     classify() returns (type,value) tuple of QR
+        args: cap which is cv.VideoCapture(0)
     get_type() | PRIVATE FUNCTION | returns the type of the QR ex: location, row/rack, item
+        args: qr_value string from classify
 
     NOTE: type refers to row/rack, item or position 
 
 '''
 
-import cv2
 import zxingcpp
 
 class QrReader: 
@@ -28,17 +29,13 @@ class QrReader:
             return "item"
 
 
-    def classify(self):
-        cap = cv2.VideoCapture(0) 
+    def classify(self, img):
 
-        success, img = cap.read()    # image as array
-        if success:
-            results = zxingcpp.read_barcodes(img)   # calls the barcode reader fn.
+        results = zxingcpp.read_barcodes(img)   # calls the barcode reader fn.
 
-            for result in results:  # might return multiple readings, uses o/p from FIRST one
-                return (self.get_type(result.text), result.text)      # returns type, value
-                
-            if len(results) == 0:       # returs none type if qr not found
-                return
+        for result in results:  # might return multiple readings, uses o/p from FIRST one
+            return (self.get_type(result.text), result.text)      # returns type, value
+            
+        if len(results) == 0:       # returs none type if qr not found
+            return
 
-        cap.release()   # close object
