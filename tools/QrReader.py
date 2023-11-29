@@ -18,7 +18,7 @@ import zxingcpp
 
 class QrReader: 
 
-    def get_type(self, qr_value):       # parses string and returs type
+    def get_type(self, qr_value):       # parses string and returns type
         if qr_value[:1] == "l":
             return "location"
         elif qr_value[:1] == "r":

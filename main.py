@@ -7,7 +7,7 @@ import sys      # used to import folders containing classfiles
 sys.path.insert(0, 'flight/')
 sys.path.insert(0, 'network/')
 sys.path.insert(0, 'tools/')
-import threading
+from multiprocessing import Process
 
 # camera
 from tools.QrReader import QrReader
@@ -25,19 +25,22 @@ def camera_runner(camera_output, cap):
         will always be running and writes non empty results into the list
         REMEMBER TO CLEAR THE LIST
     '''
-    camera = QrReader()
-    cap = cv2.VideoCapture(0) 
+    camera = QrReader()     # creates QrReader object
+    cap = cv2.VideoCapture(0)   # calls VideoCapture and stores image in cap
     while True:
-        success, img = cap.read()
-        result = camera.classify(img)
+        success, img = cap.read()   # cap gets converted to numpy array
+        result = camera.classify(img)   # calls classify passing the array as arg
         if result is not None:
-            camera_output.append(result)
+            camera_output.append(result)    # writes to the camera_output list to be processed later
 
 
 
 
 def main():
     print("still empty")
+    '''
+    Processes for each feature have to be created and called here
+    '''
 
 
 if __name__ =="__main__":
