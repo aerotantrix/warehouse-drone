@@ -13,6 +13,7 @@ import queue
 # camera
 from tools.QrReader import QrReader
 import cv2
+from datetime import datetime
  
 
 
@@ -45,11 +46,11 @@ def main():
     '''
     Processes for each feature have to be created and called here
     '''
-    camera_output = queue.Queue()
-    camera_thread = threading.Thread(target=camera_runner, args=(camera_output,))
-    camera_thread.start()
+    camera_output = queue.Queue()       # ceates the new queue for the camera output
+    camera_thread = threading.Thread(target=camera_runner, args=(camera_output,))       # This line creates a thread object using the threading module. It sets the target function to camera_runner and passes the camera_output queue as an argument.
+    camera_thread.start()           # This line starts the execution of the camera_thread.
     while True:
-        print(camera_output.get())
+        print(camera_output.get())      # used to retrive the data from thte camera queue 
 
 if __name__ =="__main__":
-    main()
+    main()                      
