@@ -1,6 +1,5 @@
 # folders ignored
 drone/
-detritus/
 __pycache__/
 
 # files ignored
