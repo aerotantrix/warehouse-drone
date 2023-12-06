@@ -18,3 +18,7 @@ class RequestDetails(BaseModel):
     password: str
 
 
+class StationCreate(BaseModel):
+    stationname: str
+    password: str
+    battery: int

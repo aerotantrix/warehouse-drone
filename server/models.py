@@ -18,18 +18,19 @@ class TokenTable(Base):
     status = Column(Boolean)
     created_datetime = Column(DateTime, default=datetime.now)
 
+
 class RpiStation(Base):
     __tablename__ = "rpistations"
-    username = Column(String(32), primary_key=True)
-    email = Column(String(64), nullable=False)
+    stationname = Column(String(32), primary_key=True)
     password = Column(String(256), unique=True, nullable=False)
-    battery = Column(Integer, nullable=False)
+    battery = Column(Integer, nullable=True)
 
-class Product(Base):
-    __tablename__ = "products"
-    prod_id = Column(String(32), nullable=False, primary_key=True)
+
+class Bin(Base):
+    __tablename__ = "bins"
+    bin_id = Column(String(32), nullable=False, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.now)
     row = Column(Integer, nullable=False)
     col = Column(Integer, nullable=False)
     rack = Column(Integer, nullable=False)
-    drone_name = Column(String(32), ForeignKey(RpiStation.username), nullable=False)
+    drone_name = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)

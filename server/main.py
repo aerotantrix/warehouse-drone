@@ -18,7 +18,8 @@ from typing import Dict, List
 from credentials import psql_credentials
 from datetime import datetime
 from celery.result import AsyncResult
-#from celery_server import Tasks
+
+# from celery_server import Tasks
 
 
 database.Base.metadata.create_all(database.engine)
@@ -48,6 +49,7 @@ app.add_middleware(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 def token_required(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
@@ -70,7 +72,7 @@ def token_required(func):
     return wrapper
 
 
-@app.post("/register", tags=["Authentication"])
+@app.post("/register-user", tags=["Authentication"])
 async def register_user(
     user: schemas.UserCreate, session: Session = Depends(get_session)
 ):
@@ -94,8 +96,36 @@ async def register_user(
     return {"message": f"User {new_user.username} created successfully"}
 
 
-@app.post("/login", response_model=schemas.TokenSchema, tags=["Authentication"])
-async def login(
+@app.post("/register-station", tags=["Authentication"])
+@token_required
+async def register_station(
+    station: schemas.StationCreate,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+    existing_station: models.RpiStation | None = (
+        session.query(models.RpiStation)
+        .filter_by(stationname=station.stationname)
+        .first()
+    )
+    if existing_station:
+        raise HTTPException(status_code=400, detail="Station name already registered")
+
+    new_station = models.RpiStation(
+        stationname=station.stationname,
+        password=station.password,
+        battery=station.battery,
+    )
+
+    session.add(new_station)
+    session.commit()
+    session.refresh(new_station)
+
+    return {"message": f"Station {new_station.stationname} created successfully"}
+
+
+@app.post("/login-user", response_model=schemas.TokenSchema, tags=["Authentication"])
+async def login_user(
     request: schemas.RequestDetails, session: Session = Depends(get_session)
 ) -> Dict:
     user: models.User = (
@@ -125,3 +155,36 @@ async def login(
 
     return {"access_token": access_token}
 
+
+# NOTE: INTERNAL SERVER ERROR 500
+@app.post("/login-station", response_model=schemas.TokenSchema, tags=["Authentication"])
+async def login_station(
+    request: schemas.RequestDetails,
+    session: Session = Depends(get_session),
+) -> Dict:
+    station: models.RpiStation = (
+        session.query(models.RpiStation)
+        .filter(models.RpiStation.stationname == request.username)
+        .first()
+    )
+    if station is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect stationname"
+        )
+    hashed_password = station.password
+    if not utils.verify_password(request.password, hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password"
+        )
+
+    access_token = utils.create_access_token(station.stationname)
+
+    token_db = models.TokenTable(
+        username=station.stationname, access_token=access_token, status=True
+    )
+
+    session.add(token_db)
+    session.commit()
+    session.refresh(token_db)
+
+    return {"access_token": access_token}
