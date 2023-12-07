@@ -113,7 +113,7 @@ async def register_station(
 
     new_station = models.RpiStation(
         stationname=station.stationname,
-        password=station.password,
+        password=utils.get_hashed_password(station.password),
         battery=station.battery,
     )
 
@@ -156,7 +156,6 @@ async def login_user(
     return {"access_token": access_token}
 
 
-# NOTE: INTERNAL SERVER ERROR 500
 @app.post("/login-station", response_model=schemas.TokenSchema, tags=["Authentication"])
 async def login_station(
     request: schemas.RequestDetails,
@@ -188,3 +187,41 @@ async def login_station(
     session.refresh(token_db)
 
     return {"access_token": access_token}
+
+
+@app.get("/user_details", response_model=schemas.UserDetails, tags=["Details"])
+@token_required
+async def user_details(
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+    username: str | None = (
+        session.query(models.TokenTable)
+        .filter(models.TokenTable.access_token == dependencies)
+        .first()
+    ).username
+
+    if username is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User doesn't exist"
+        )
+
+    user: models.User = (
+        session.query(models.User).filter(models.User.username == username).first()
+    )
+    return {"name": user.name, "email": user.email}
+
+
+# login required for all below
+
+# getting user details without password
+
+# getting station details without password
+# internal function that will ask the station for drone battery percent. (write to db)
+
+# write update to database -- bin table
+
+# write get call to get bin table
+
+
+#
