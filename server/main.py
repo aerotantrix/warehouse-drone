@@ -224,4 +224,26 @@ async def user_details(
 # write get call to get bin table
 
 
-#
+@app.get("/{stationname}", response_model=schemas.StationDetails, tags=["Details"])
+@token_required
+async def getBattery(
+    stationname: str,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+)->Dict:
+    # stationname: str | None = (
+    #     session.query(models.RpiStation)
+    #     .filter(models.TokenTable.access_token == dependencies)
+    #     .first()
+    # ).stationname
+
+    # if stationname is None:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST, detail="Station doesn't exist"
+    #     )
+    station: models.RpiStation = (
+        session.query(models.RpiStation)
+        .filter(models.RpiStation.stationname == stationname)
+        .first()
+    )
+    return {"stationname": station.stationname, "battery": station.battery}

@@ -27,3 +27,8 @@ class StationCreate(BaseModel):
 class UserDetails(BaseModel):
     name: str
     email: str
+
+
+class StationDetails(BaseModel):
+    stationname: str
+    battery: int
