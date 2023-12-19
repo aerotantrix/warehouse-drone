@@ -247,3 +247,6 @@ async def getBattery(
         .first()
     )
     return {"stationname": station.stationname, "battery": station.battery}
+
+
+ 
