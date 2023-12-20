@@ -7,6 +7,7 @@ import auth_bearer
 import numpy as np
 import pandas as pd
 import sqlalchemy
+import pika
 
 from functools import wraps
 from fastapi import Depends, FastAPI, HTTPException, status
@@ -18,7 +19,6 @@ from typing import Dict, List
 from credentials import psql_credentials
 from datetime import datetime
 from celery.result import AsyncResult
-
 # from celery_server import Tasks
 
 
@@ -248,5 +248,3 @@ async def getBattery(
     )
     return {"stationname": station.stationname, "battery": station.battery}
 
-
- 

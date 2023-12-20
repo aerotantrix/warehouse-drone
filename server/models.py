@@ -31,6 +31,14 @@ class Bin(Base):
     bin_id = Column(String(32), nullable=False, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.now)
     row = Column(Integer, nullable=False)
-    col = Column(Integer, nullable=False)
     rack = Column(Integer, nullable=False)
-    drone_name = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
+    shelf = Column(Integer, nullable=False)
+    status = Column(Boolean, default=False)
+    stationname = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
+
+
+class DroneSchedule(Base):
+    __tablename__ = "droneschedule"
+    stationname = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
+    schedule_time = Column(DateTime, nullable=False)
+    
