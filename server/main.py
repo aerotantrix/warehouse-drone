@@ -19,6 +19,7 @@ from typing import Dict, List
 from credentials import psql_credentials
 from datetime import datetime
 from celery.result import AsyncResult
+
 # from celery_server import Tasks
 
 
@@ -230,7 +231,7 @@ async def getBattery(
     stationname: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer()),
-)->Dict:
+) -> Dict:
     # stationname: str | None = (
     #     session.query(models.RpiStation)
     #     .filter(models.TokenTable.access_token == dependencies)
@@ -248,3 +249,20 @@ async def getBattery(
     )
     return {"stationname": station.stationname, "battery": station.battery}
 
+
+@app.get("/Bin/{drone_name}")
+async def get_bin_details(drone_name: str):
+    db = Session()
+    bin_details = (
+        db.query(models.Bin).filter(models.Bin.drone_name == drone_name).first()
+    )
+    db.close()
+    # return {
+    #     "timestamp": bin_details.timestamp,
+    #     "bin_id": bin_details.bin_id,
+    #     "row": bin_details.row,
+    #     "col": bin_details.col,
+    #     "rack": bin_details.rack,
+    #     "drone_name": bin_details.drone_name,
+    # }
+    return bin_details
