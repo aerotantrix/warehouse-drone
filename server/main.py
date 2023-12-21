@@ -7,7 +7,7 @@ import auth_bearer
 import numpy as np
 import pandas as pd
 import sqlalchemy
-import pika
+
 
 from functools import wraps
 from fastapi import Depends, FastAPI, HTTPException, status

@@ -39,6 +39,8 @@ class Bin(Base):
 
 class DroneSchedule(Base):
     __tablename__ = "droneschedule"
+    id = Column(Integer, primary_key=True, autoincrement=True)
     stationname = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
     schedule_time = Column(DateTime, nullable=False)
+    
     
