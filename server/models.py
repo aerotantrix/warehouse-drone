@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Boolean, Integer, ForeignKey
+from sqlalchemy import Column, String, DateTime, Boolean, Integer, ForeignKey, PrimaryKeyConstraint
 from database import Base
 from datetime import datetime
 
@@ -28,11 +28,11 @@ class RpiStation(Base):
 
 class Bin(Base):
     __tablename__ = "bins"
-    bin_id = Column(String(32), nullable=False, primary_key=True)
+    bin_id = Column(String(32), nullable=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.now)
-    row = Column(Integer, nullable=False)
-    rack = Column(Integer, nullable=False)
-    shelf = Column(Integer, nullable=False)
+    row = Column(Integer, nullable=False, primary_key=True)
+    rack = Column(Integer, nullable=False, primary_key=True)
+    shelf = Column(Integer, nullable=False, primary_key=True)
     status = Column(Boolean, default=False)
     stationname = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
 

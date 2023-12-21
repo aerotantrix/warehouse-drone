@@ -257,12 +257,30 @@ async def get_bin_details(drone_name: str):
         db.query(models.Bin).filter(models.Bin.drone_name == drone_name).first()
     )
     db.close()
-    # return {
-    #     "timestamp": bin_details.timestamp,
-    #     "bin_id": bin_details.bin_id,
-    #     "row": bin_details.row,
-    #     "col": bin_details.col,
-    #     "rack": bin_details.rack,
-    #     "drone_name": bin_details.drone_name,
-    # }
-    return bin_details
+    return {
+        "timestamp": bin_details.timestamp,
+        "bin_id": bin_details.bin_id,
+        "row": bin_details.row,
+        "col": bin_details.col,
+        "rack": bin_details.rack,
+        "drone_name": bin_details.drone_name,
+    }
+
+
+@app.get("/check-schedule/{stationname}")
+async def check_schedule(
+    stationname: str,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer())):
+    try:
+        schedule_data = (
+            session.query(models.DroneSchedule)
+            .filter_by(stationname=stationname)
+            .order_by(models.DroneSchedule.schedule_time)
+            .first()
+        )
+        return {schedule_data.schedule_time} if schedule_data else {}
+    except Exception:
+        raise HTTPException(status_code=500, detail="schedule not found")
+
+
