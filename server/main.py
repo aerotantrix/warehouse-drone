@@ -250,11 +250,11 @@ async def getBattery(
     return {"stationname": station.stationname, "battery": station.battery}
 
 
-@app.get("/Bin/{drone_name}")
-async def get_bin_details(drone_name: str):
+@app.get("/bin/{station_name}")
+async def get_bin_details(station_name: str):
     db = Session()
     bin_details = (
-        db.query(models.Bin).filter(models.Bin.drone_name == drone_name).first()
+        db.query(models.Bin).filter(models.Bin.station_name == station_name).first()
     )
     db.close()
     return {
@@ -263,7 +263,7 @@ async def get_bin_details(drone_name: str):
         "row": bin_details.row,
         "col": bin_details.col,
         "rack": bin_details.rack,
-        "drone_name": bin_details.drone_name,
+        "station_name": bin_details.station_name,
     }
 
 
@@ -284,3 +284,50 @@ async def check_schedule(
         raise HTTPException(status_code=500, detail="schedule not found")
 
 
+@app.post("/insert-bin-data/")
+async def insert_bin_data(
+    bin_id: int,
+    row: str,
+    rack: str,
+    shelf: str,
+    status: str,
+    session: Session = Depends(get_session)
+):
+    try:
+        new_bin = models.Bin(
+            bin_id=bin_id,
+            row=row,
+            rack=rack,
+            shelf=shelf,
+            status=status
+        )
+        session.add(new_bin)
+        session.commit()
+        session.refresh(new_bin)
+        return {"message": "Bin data inserted successfully"}
+    except Exception:
+        raise HTTPException(status_code=500, detail="error inserting into DB")
+    
+
+@app.post("/remove-bin/")
+async def remove_bin(
+    row: int,
+    rack: int,
+    shelf: int,
+    session: Session = Depends(get_session)
+):
+    try:
+        bin_tuple = (
+            session.query(models.Bin)
+            .filter_by(row=row, rack=rack, shelf=shelf)
+            .first()
+        )
+
+        if bin_tuple:
+            session.delete(bin_tuple)
+            session.commit()
+            return {"message": "Tuple removed successfully"}
+        else:
+            return {"message": "Tuple not found"}
+    except Exception:
+        raise HTTPException(status_code=500, detail=f"Error: Requested tuple not found in DB")
