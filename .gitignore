@@ -1,5 +1,4 @@
 # folders ignored
-drone/
 __pycache__/
 credentials.py
 
