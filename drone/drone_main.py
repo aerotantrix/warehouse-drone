@@ -5,31 +5,56 @@ from djitellopy import Tello
 from queue import Queue
 import threading
 import requests
+import numpy as np
 #import json
+print("mainrun")
+
+from wifi_connect import WiFi
 
 class Inv:
     def __init__(self) -> None:
         self.reader = zxing.BarCodeReader()
+        self.connector = WiFi()
+        self.desired_network = "TELLO-C3A55B"
+        self.password = ''
+        self.initialize_connection()
         self.tello = Tello()
         self.Q = Queue()
         self.Dictionary={}
         self.ServerUrl = "http://192.168.1.100"
         #self.__JsonFilePath="data.json"
-        self.row_size,self.column_size=5,5
-        self.box_height,self.box_width=52,72
+        self.row_size,self.column_size=4,4
+        self.box_height,self.box_width=46,72
         self.speed=20
-        self.Sleep_time=0.2
+        self.Sleep_time=0.1
         self.ProductData=""
         self.Status=-1
         print("HI ",self)
+        # Choose a network to connect (replace 'YourNetworkName' with the desired network name)
+
+        # Create an instance of connect2wifi class
+        self.networks = self.connector.get_wifi_networks()
+        self.wifi_connect=self.connector.connect_to_wifi(self.desired_network,self.password)
+        #connect to tello
         self.tello.connect()
         
+    def initialize_connection(self):
+        if self.connector.get_current_network() != self.desired_network:
+            self.connector.connect_to_wifi(self.desired_network, self.password)
+            if self.connector.get_current_network() != self.desired_network:
+                raise Exception(f'Cannot connect to {self.desired_network}')
         
     def move_to_target_location(self) -> None:
-        self.tello.takeoff()
-        self.tello.streamon()
-        self.tello.move_up(self.column_size*self.box_height)
-        
+        try:
+            if self.tello.get_battery() <= 10:
+                raise Exception(f'Low Battery: {self.tello.get_battery()}')
+            else:
+                print(f'Battery: {self.tello.get_battery()}%')
+            self.tello.takeoff()
+            self.tello.streamon()
+            self.tello.move_up(self.column_size*(self.box_height - 1)-40)
+        except Exception as e:
+            print('Error in move_to_target_location(): ', e)
         
         
         
@@ -52,40 +77,41 @@ class Inv:
                 elif i % 2 != 0:
                     self.tello.move_left(self.box_height)
                 time.sleep(self.Sleep_time)
-                rack_key = chr(ord('A') + j)    # Convert ASCII to get 'A', 'B', 'C', ...
-                
-                
-                self.ProductData=self.qr_process()
+                #rack_key = chr(ord('A') + j)    # Convert ASCII to get 'A', 'B', 'C', ...
+                #self.ProductData=self.qr_process(i, j)
                 if self.ProductData=="Not available":
                     self.Status=0
                 self.Status=1
                 self.Dictionary={"BIN ID:":bin_key,
-                                 "RACK NO:":rack_key,
+                                 "RACK NO:":j,
                                  "SHELF ":1,
                                  "ProductData":self.ProductData,
                                  "Status":self.Status}
                 
-                self.send_data_to_server()
+                #self.send_data_to_server()
                 bin_key +=1   # Bin values starting from 1eft
             if (self.row_size-i) != 1:
                 self.tello.move_down(self.box_width)
             else:
-                self.move_to_initial_location(self.row_size,self.box_height)
+                self.move_to_initial_location()
                 
                 
-                
-    def qr_process(self) -> str:
+    def qr_process(self, i: int, j: int) -> str:
         while True:
-            image= self.tello.get_frame_read().frame
-            image = cv2.resize(image, (1280,720))
-            cv2.imshow("Tello Video Feed", image)
-            result_set = self.reader.decode(image).parsed 
-            for result in result_set:
+            try:
+                image: np.ndarray = self.tello.get_frame_read().frame
+                image = cv2.resize(image, (1280,720))
+                cv2.imshow("Tello Video Feed", image)
+                cv2.imwrite(f'img{i}{j}.png', image)
+                result: str = self.reader.decode(f'img{i}{j}'.png).parsed
                 if result not in self.Q:
                     self.Q.put(result)
                     return result.text
+                else:
+                    return "Not available"
+            except Exception as e:
+                print("Error at qr_process(): ", e)
                 return "Not available"
-        
         
         
         
