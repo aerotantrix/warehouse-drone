@@ -19,7 +19,7 @@ class RequestDetails(BaseModel):
 
 
 class StationCreate(BaseModel):
-    stationname: str
+    station_name: str
     password: str
     battery: int
 
@@ -30,5 +30,5 @@ class UserDetails(BaseModel):
 
 
 class StationDetails(BaseModel):
-    stationname: str
+    station_name: str
     battery: int

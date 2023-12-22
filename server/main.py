@@ -106,14 +106,14 @@ async def register_station(
 ):
     existing_station: models.RpiStation | None = (
         session.query(models.RpiStation)
-        .filter_by(stationname=station.stationname)
+        .filter_by(station_name=station.station_name)
         .first()
     )
     if existing_station:
         raise HTTPException(status_code=400, detail="Station name already registered")
 
     new_station = models.RpiStation(
-        stationname=station.stationname,
+        station_name=station.station_name,
         password=utils.get_hashed_password(station.password),
         battery=station.battery,
     )
@@ -122,7 +122,7 @@ async def register_station(
     session.commit()
     session.refresh(new_station)
 
-    return {"message": f"Station {new_station.stationname} created successfully"}
+    return {"message": f"Station {new_station.station_name} created successfully"}
 
 
 @app.post("/login-user", response_model=schemas.TokenSchema, tags=["Authentication"])
@@ -164,12 +164,12 @@ async def login_station(
 ) -> Dict:
     station: models.RpiStation = (
         session.query(models.RpiStation)
-        .filter(models.RpiStation.stationname == request.username)
+        .filter(models.RpiStation.station_name == request.username)
         .first()
     )
     if station is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect stationname"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect station_name"
         )
     hashed_password = station.password
     if not utils.verify_password(request.password, hashed_password):
@@ -177,10 +177,10 @@ async def login_station(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password"
         )
 
-    access_token = utils.create_access_token(station.stationname)
+    access_token = utils.create_access_token(station.station_name)
 
     token_db = models.TokenTable(
-        username=station.stationname, access_token=access_token, status=True
+        username=station.station_name, access_token=access_token, status=True
     )
 
     session.add(token_db)
@@ -225,29 +225,29 @@ async def user_details(
 # write get call to get bin table
 
 
-@app.get("/{stationname}", response_model=schemas.StationDetails, tags=["Details"])
+@app.get("/{station_name}", response_model=schemas.StationDetails, tags=["Details"])
 @token_required
 async def getBattery(
-    stationname: str,
+    station_name: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer()),
-) -> Dict:
-    # stationname: str | None = (
-    #     session.query(models.RpiStation)
-    #     .filter(models.TokenTable.access_token == dependencies)
-    #     .first()
-    # ).stationname
+    ) -> Dict:
+    station_name: str | None = (
+        session.query(models.RpiStation)
+        .filter(models.TokenTable.access_token == dependencies)
+        .first()
+    ).station_name
 
-    # if stationname is None:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST, detail="Station doesn't exist"
-    #     )
+    if station_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Station doesn't exist"
+        )
     station: models.RpiStation = (
         session.query(models.RpiStation)
-        .filter(models.RpiStation.stationname == stationname)
+        .filter(models.RpiStation.station_name == station_name)
         .first()
     )
-    return {"stationname": station.stationname, "battery": station.battery}
+    return {"station_name": station.station_name, "battery": station.battery}
 
 
 @app.get("/bin/{station_name}")
@@ -267,15 +267,15 @@ async def get_bin_details(station_name: str):
     }
 
 
-@app.get("/check-schedule/{stationname}")
+@app.get("/check-schedule/{station_name}")
 async def check_schedule(
-    stationname: str,
+    station_name: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer())):
     try:
         schedule_data = (
             session.query(models.DroneSchedule)
-            .filter_by(stationname=stationname)
+            .filter_by(station_name=station_name)
             .order_by(models.DroneSchedule.schedule_time)
             .first()
         )
@@ -284,8 +284,35 @@ async def check_schedule(
         raise HTTPException(status_code=500, detail="schedule not found")
 
 
-@app.post("/insert-bin-data/")
-async def insert_bin_data(
+@app.post("/dashboard-insert/")
+async def bin_data_dashboard(
+    bin_id: int,
+    row: str,
+    rack: str,
+    shelf: str,
+    status: str,
+    station_name: str,
+    session: Session = Depends(get_session)
+):
+    try:
+        new_bin = models.Bin(
+            bin_id=bin_id,
+            row=row,
+            rack=rack,
+            shelf=shelf,
+            status=status,
+            station_name=station_name
+        )
+        session.add(new_bin)
+        session.commit()
+        session.refresh(new_bin)
+        return {"message": "Bin data inserted successfully"}
+    except Exception:
+        raise HTTPException(status_code=500, detail="error inserting into DB")
+
+
+@app.post("/station-insert/")
+async def bin_data_station(
     bin_id: int,
     row: str,
     rack: str,

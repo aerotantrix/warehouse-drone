@@ -21,7 +21,7 @@ class TokenTable(Base):
 
 class RpiStation(Base):
     __tablename__ = "rpistations"
-    stationname = Column(String(32), primary_key=True)
+    station_name = Column(String(32), primary_key=True)
     password = Column(String(256), unique=True, nullable=False)
     battery = Column(Integer, nullable=True)
 
@@ -34,13 +34,13 @@ class Bin(Base):
     rack = Column(Integer, nullable=False, primary_key=True)
     shelf = Column(Integer, nullable=False, primary_key=True)
     status = Column(Boolean, default=False)
-    stationname = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
+    station_name = Column(String(32), ForeignKey(RpiStation.station_name), nullable=False)
 
 
 class DroneSchedule(Base):
     __tablename__ = "droneschedule"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    stationname = Column(String(32), ForeignKey(RpiStation.stationname), nullable=False)
+    station_name = Column(String(32), ForeignKey(RpiStation.station_name), nullable=False)
     schedule_time = Column(DateTime, nullable=False)
     
-    
+ 
