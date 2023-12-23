@@ -1,0 +1,14 @@
+.dashboard-container {
+  margin-top: 4rem;
+  ag-grid-angular {
+    padding: 3rem;
+  }
+}
+::ng-deep .view-shelves {
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease-in-out;
+  height: 2.5rem;
+  &:hover {
+    background-color: rgba(33, 150, 243, 0.25);
+  }
+}

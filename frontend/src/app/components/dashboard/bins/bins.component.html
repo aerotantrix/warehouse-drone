@@ -1,0 +1,31 @@
+<div class="bins-container">
+  <ag-grid-angular
+    [rowData]="bins"
+    [columnDefs]="colDefs"
+    class="ag-theme-quartz"
+    style="height: 800px"
+  >
+  </ag-grid-angular>
+  <h2>Table Visualization</h2>
+  <div class="shelf">
+    <div class="col-label">
+      <div
+        *ngFor="let row of [].constructor(5); let j = index"
+        class="shelf-bin-no-border"
+      >
+        {{ j }}
+      </div>
+    </div>
+    <div *ngFor="let row of [].constructor(5); let i = index" class="shelf-row">
+      {{ i }}
+
+      <div
+        *ngFor="let row of [].constructor(5); let j = index"
+        class="shelf-bin"
+        [ngClass]="bins[i * 5 + j].present === true ? 'green-bin' : 'red-bin'"
+      >
+        {{ bins[i * 5 + j].bin_id }}
+      </div>
+    </div>
+  </div>
+</div>
