@@ -1,7 +1,7 @@
 import subprocess
 
 from typing import List
-print("wifirun")
+
 class WiFi:
     def get_wifi_networks(self) -> List[str]:
         try:

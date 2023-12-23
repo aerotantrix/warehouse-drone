@@ -7,7 +7,6 @@ import threading
 import requests
 import numpy as np
 #import json
-print("mainrun")
 
 from wifi_connect import WiFi
 

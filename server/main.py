@@ -1,3 +1,6 @@
+import stat
+from turtle import st
+from cv2 import randShuffle
 import utils
 import models
 import asyncio
@@ -190,26 +193,18 @@ async def login_station(
     return {"access_token": access_token}
 
 
-@app.get("/user_details", response_model=schemas.UserDetails, tags=["Details"])
+@app.get("/user_details/{username}", response_model=schemas.UserDetails, tags=["Details"])
 @token_required
 async def user_details(
+    username: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer()),
 ):
-    username: str | None = (
-        session.query(models.TokenTable)
-        .filter(models.TokenTable.access_token == dependencies)
-        .first()
-    ).username
-
-    if username is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User doesn't exist"
-        )
-
     user: models.User = (
         session.query(models.User).filter(models.User.username == username).first()
     )
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username")
     return {"name": user.name, "email": user.email}
 
 
@@ -225,49 +220,56 @@ async def user_details(
 # write get call to get bin table
 
 
-@app.get("/{station_name}", response_model=schemas.StationDetails, tags=["Details"])
+@app.get("/station/{station_name}", tags=["Details"])
 @token_required
-async def getBattery(
+async def get_battery(
     station_name: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer()),
     ) -> Dict:
-    station_name: str | None = (
-        session.query(models.RpiStation)
-        .filter(models.TokenTable.access_token == dependencies)
-        .first()
-    ).station_name
-
-    if station_name is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Station doesn't exist"
-        )
     station: models.RpiStation = (
         session.query(models.RpiStation)
         .filter(models.RpiStation.station_name == station_name)
         .first()
     )
-    return {"station_name": station.station_name, "battery": station.battery}
+    if station is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Incorrect Station')
+    return {"battery": station.battery }
 
 
 @app.get("/bin/{station_name}")
-async def get_bin_details(station_name: str):
-    db = Session()
-    bin_details = (
-        db.query(models.Bin).filter(models.Bin.station_name == station_name).first()
-    )
-    db.close()
-    return {
-        "timestamp": bin_details.timestamp,
-        "bin_id": bin_details.bin_id,
-        "row": bin_details.row,
-        "col": bin_details.col,
-        "rack": bin_details.rack,
-        "station_name": bin_details.station_name,
-    }
+@token_required
+async def get_bin_details(
+    station_name: str,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer())
+    ):
+    try:
+        db = Session()
+        bin_details = (
+            db.query(models.Bin)
+            .filter(models.Bin.station_name == station_name)
+            .first()
+        )
+        db.close()
+
+        if bin_details is None:
+            raise HTTPException(status_code=404, detail="bin details not found")
+
+        return {
+            "timestamp": bin_details.timestamp,
+            "bin_id": bin_details.bin_id,
+            "row": bin_details.row,
+            "col": bin_details.col,
+            "rack": bin_details.rack,
+            "station_name": bin_details.station_name,
+        }
+    except Exception:
+        raise HTTPException(status_code=404, detail="bin details not found")
 
 
 @app.get("/check-schedule/{station_name}")
+@token_required
 async def check_schedule(
     station_name: str,
     session: Session = Depends(get_session),
@@ -285,6 +287,7 @@ async def check_schedule(
 
 
 @app.post("/dashboard-insert/")
+@token_required
 async def bin_data_dashboard(
     bin_id: int,
     row: str,
