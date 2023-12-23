@@ -4,6 +4,7 @@ import subprocess
 from typing import List
 
 
+
 class WiFi:
     def __init__(self) -> None:
         self.os = platform.system()
