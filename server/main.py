@@ -10,7 +10,7 @@ import sqlalchemy
 
 
 from functools import wraps
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
@@ -193,23 +193,17 @@ async def login_station(
 @app.get("/user_details", response_model=schemas.UserDetails, tags=["Details"])
 @token_required
 async def user_details(
+    username: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer()),
 ):
-    username: str | None = (
-        session.query(models.TokenTable)
-        .filter(models.TokenTable.access_token == dependencies)
-        .first()
-    ).username
-
-    if username is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User doesn't exist"
-        )
-
     user: models.User = (
         session.query(models.User).filter(models.User.username == username).first()
     )
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username"
+        )
     return {"name": user.name, "email": user.email}
 
 
@@ -225,53 +219,55 @@ async def user_details(
 # write get call to get bin table
 
 
-@app.get("/{station_name}", response_model=schemas.StationDetails, tags=["Details"])
+@app.get("/station/{station_name}", tags=["Details"])
 @token_required
-async def getBattery(
+async def get_battery(
     station_name: str,
     session: Session = Depends(get_session),
     dependencies=Depends(auth_bearer.JWTBearer()),
-    ) -> Dict:
-    station_name: str | None = (
-        session.query(models.RpiStation)
-        .filter(models.TokenTable.access_token == dependencies)
-        .first()
-    ).station_name
-
-    if station_name is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Station doesn't exist"
-        )
+) -> Dict:
     station: models.RpiStation = (
         session.query(models.RpiStation)
         .filter(models.RpiStation.station_name == station_name)
         .first()
     )
-    return {"station_name": station.station_name, "battery": station.battery}
+    if station is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect Station"
+        )
+    return {"battery": station.battery}
 
 
 @app.get("/bin/{station_name}")
-async def get_bin_details(station_name: str):
-    db = Session()
-    bin_details = (
-        db.query(models.Bin).filter(models.Bin.station_name == station_name).first()
-    )
-    db.close()
-    return {
-        "timestamp": bin_details.timestamp,
-        "bin_id": bin_details.bin_id,
-        "row": bin_details.row,
-        "col": bin_details.col,
-        "rack": bin_details.rack,
-        "station_name": bin_details.station_name,
-    }
-
-
-@app.get("/check-schedule/{station_name}")
-async def check_schedule(
+@token_required
+async def get_bin_details(
     station_name: str,
     session: Session = Depends(get_session),
-    dependencies=Depends(auth_bearer.JWTBearer())):
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+    try:
+        bin_details = (
+            session.query(models.Bin)
+            .filter(models.Bin.station_name == station_name)
+            .all()
+        )
+
+        if bin_details is None:
+            raise HTTPException(status_code=404, detail="bin details not found")
+
+        return bin_details
+    except Exception:
+        raise HTTPException(status_code=404, detail="bin details not found")
+
+
+@app.get("/check-schedule/{station_name}/{battery}")
+@token_required
+async def check_schedule(
+    station_name: str,
+    battery: int,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
     try:
         schedule_data = (
             session.query(models.DroneSchedule)
@@ -279,82 +275,119 @@ async def check_schedule(
             .order_by(models.DroneSchedule.schedule_time)
             .first()
         )
-        return {schedule_data.schedule_time} if schedule_data else {}
-    except Exception:
-        raise HTTPException(status_code=500, detail="schedule not found")
+
+        station: models.RpiStation = (
+            session.query(models.RpiStation)
+            .filter(models.RpiStation.station_name == station_name)
+            .first()
+        )
+        station.battery = battery
+        session.commit()
+        session.refresh(station)
+
+        return {"schedule": schedule_data.schedule_time} if schedule_data else {}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{e}")
 
 
-@app.post("/dashboard-insert/")
-async def bin_data_dashboard(
-    bin_id: int,
-    row: str,
-    rack: str,
-    shelf: str,
-    status: str,
-    station_name: str,
-    session: Session = Depends(get_session)
+@app.post("/add-bin")
+@token_required
+async def bin_insert(
+    request: schemas.InsertBin,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
 ):
     try:
         new_bin = models.Bin(
-            bin_id=bin_id,
-            row=row,
-            rack=rack,
-            shelf=shelf,
-            status=status,
-            station_name=station_name
+            bin_id=request.bin_id,
+            row=request.row,
+            rack=request.rack,
+            shelf=request.shelf,
+            status=request.status,
+            station_name=request.station_name,
         )
         session.add(new_bin)
         session.commit()
         session.refresh(new_bin)
-        return {"message": "Bin data inserted successfully"}
+        return Response(status_code=200)
     except Exception:
         raise HTTPException(status_code=500, detail="error inserting into DB")
 
 
-@app.post("/station-insert/")
-async def bin_data_station(
-    bin_id: int,
-    row: str,
-    rack: str,
-    shelf: str,
-    status: str,
-    session: Session = Depends(get_session)
-):
-    try:
-        new_bin = models.Bin(
-            bin_id=bin_id,
-            row=row,
-            rack=rack,
-            shelf=shelf,
-            status=status
-        )
-        session.add(new_bin)
-        session.commit()
-        session.refresh(new_bin)
-        return {"message": "Bin data inserted successfully"}
-    except Exception:
-        raise HTTPException(status_code=500, detail="error inserting into DB")
-    
-
-@app.post("/remove-bin/")
+@app.delete("/delete-bin")
+@token_required
 async def remove_bin(
     row: int,
     rack: int,
     shelf: int,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
 ):
     try:
         bin_tuple = (
-            session.query(models.Bin)
-            .filter_by(row=row, rack=rack, shelf=shelf)
-            .first()
+            session.query(models.Bin).filter_by(row=row, rack=rack, shelf=shelf).first()
         )
-
         if bin_tuple:
             session.delete(bin_tuple)
             session.commit()
-            return {"message": "Tuple removed successfully"}
+            return Response(status_code=200)
         else:
             return {"message": "Tuple not found"}
-    except Exception:
-        raise HTTPException(status_code=500, detail=f"Error: Requested tuple not found in DB")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{e}")
+
+
+@app.post("/add-schedule")
+@token_required
+async def add_schedule(
+    request: schemas.AddSchedule,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+    try:
+        existing_schedule: models.DroneSchedule | None = (
+            session.query(models.DroneSchedule)
+            .filter_by(
+                schedule_time=request.schedule_time, station_name=request.station_name
+            )
+            .first()
+        )
+        if existing_schedule:
+            raise HTTPException(status_code=400, detail="Username already registered")
+
+        new_schedule = models.DroneSchedule(
+            station_name=request.station_name, schedule_time=request.schedule_time
+        )
+
+        session.add(new_schedule)
+        session.commit()
+        session.refresh(new_schedule)
+
+        return Response(status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"{e}")
+
+
+@app.delete("/delete-schedule")
+@token_required
+async def delete_schedule(
+    request: schemas.AddSchedule,
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+    try:
+        existing_schedule: models.DroneSchedule | None = (
+            session.query(models.DroneSchedule)
+            .filter_by(
+                schedule_time=request.schedule_time, station_name=request.station_name
+            )
+            .first()
+        )
+        if not existing_schedule:
+            raise HTTPException(status_code=400, detail=f"No such schedule exists")
+
+        session.delete(existing_schedule)
+        session.commit()
+        return Response(status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"{e}")
