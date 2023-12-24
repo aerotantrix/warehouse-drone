@@ -1,0 +1,45 @@
+a {
+  text-decoration: none;
+}
+
+mat-toolbar {
+  width: 100vw;
+  a {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+}
+
+.before-login {
+  background-color: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  a {
+    color: white;
+    font-weight: 400;
+  }
+  .logo {
+    font-size: 2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.25rem;
+  }
+}
+
+.after-login {
+  background-color: #2196f3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  a {
+    color: white;
+    font-weight: 400;
+  }
+  .logo {
+    font-size: 2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.25rem;
+  }
+}

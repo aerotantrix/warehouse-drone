@@ -1,0 +1,72 @@
+.login-container {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  .background-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+  .overlay {
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    position: absolute;
+    background-image: linear-gradient(black, transparent);
+    backdrop-filter: blur(1rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid white;
+      border-radius: 1rem;
+      padding: 2rem;
+      align-items: center;
+      .user {
+        height: 10rem;
+        width: 10rem;
+        font-size: 10rem;
+        color: white;
+      }
+      .input-field {
+        padding: 1rem;
+        background-color: transparent;
+        border: none;
+        border-bottom: 1px solid white;
+        margin: 1rem 0rem;
+        color: white;
+        font-size: 1.5rem;
+        transition: 0.1s border-bottom ease-in-out;
+        &:focus {
+          outline: none !important;
+          border: none;
+          border-bottom: 2px solid white;
+        }
+        &::placeholder {
+          color: rgba($color: white, $alpha: 0.75);
+        }
+      }
+      .login-button {
+        border-radius: 1rem;
+        width: 100%;
+        background-color: transparent;
+        border: 1px solid white;
+        font-size: 1.5rem;
+        color: white;
+        padding: 1rem;
+        margin: 1rem 0rem;
+        transition: 0.3s background-color ease-in-out, 0.3s color ease-in-out;
+        &:hover {
+          background-color: white;
+          color: black;
+        }
+      }
+    }
+  }
+}

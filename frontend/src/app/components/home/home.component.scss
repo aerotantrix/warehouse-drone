@@ -1,0 +1,28 @@
+.home-container {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  .background-image {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+  .overlay {
+    font-family: "Nova Square", sans-serif;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    position: absolute;
+    background-image: linear-gradient(black, transparent);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    color: white;
+    text-transform: uppercase;
+  }
+}
