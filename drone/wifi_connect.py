@@ -4,14 +4,22 @@ import subprocess
 from typing import List
 
 
-
 class WiFi:
     def __init__(self) -> None:
         self.os = platform.system()
 
     def get_wifi_networks(self) -> List[str]:
         try:
-            if self.os == "Linux":
+            if self.os == "Windows":
+                cmd = "netsh wlan show networks"
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                output = result.stdout.split(sep="\n")
+                ssids = []
+                for i in range(len(output)):
+                    if output[i].find("SSID") >= 0:
+                        ssids.append(output[i][output[i].find(":") + 1 :].strip())
+                return ssids
+            elif self.os == "Linux":
                 # Run nmcli command to list available Wi-Fi networks
                 cmd = "nmcli -f 'SSID' device wifi list"
                 result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -41,7 +49,13 @@ class WiFi:
     def get_current_network(self) -> str | None:
         try:
             # Run nmcli command to list available Wi-Fi networks
-            if self.os == "Linux":
+            if self.os == "Windows":
+                cmd = '''netsh wlan show interfaces | findstr /C:"SSID"'''
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                output = result.stdout.split(sep="\n")[0]
+                output = output[output.find(":") + 1 :].strip()
+                return output
+            elif self.os == "Linux":
                 cmd = "nmcli -t -f active,ssid dev wifi"
                 result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 output = result.stdout
@@ -70,6 +84,10 @@ class WiFi:
         self, network_name, password, print_output: bool = False
     ) -> None:
         try:
+            if self.os == "Windows":
+                print(
+                    "Please ensure drone is connected if script is running in Windows. No Automatic connection facility."
+                )
             if self.os == "Linux":
                 if password:
                     # Connect to the Wi-Fi network with password
@@ -96,9 +114,3 @@ class WiFi:
 
         except Exception as e:
             print(f"Error: {str(e)}")
-
-wifi = WiFi()
-networks = wifi.get_wifi_networks()
-print(networks)
-wifi.connect_to_wifi("Mi 10i","ORROR123")
-print(wifi.get_current_network())
