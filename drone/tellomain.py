@@ -99,58 +99,59 @@ class TelloMain:
         self.__tello_port = 8889
         self.__tello_address = (self.__tello_ip, self.__tello_port)
 
-        self.__server = "http://192.168.192.50:80/"
+        self.__server = "http://192.168.1.50:80/"
         self.__station_name = "eagleEye"
         self.__password = "12345"
-        # self.__access_token = ""
+        self.__access_token = ""
+        self.login_to_server()
 
-        # # Receiving from tello
-        # self.__VS_UDP_IP = "0.0.0.0"
-        # self.__VS_UDP_PORT = 11111
-        # self.__udp_video_address = (
-        #     "udp://@"
-        #     + self.__VS_UDP_IP
-        #     + ":"
-        #     + str(self.__VS_UDP_PORT)
-        #     + "?fifo_size=3000000"
-        # )
+        # Receiving from tello
+        self.__VS_UDP_IP = "0.0.0.0"
+        self.__VS_UDP_PORT = 11111
+        self.__udp_video_address = (
+            "udp://@"
+            + self.__VS_UDP_IP
+            + ":"
+            + str(self.__VS_UDP_PORT)
+            + "?fifo_size=3000000"
+        )
 
-        # self.__wifi = WiFi()
+        self.__wifi = WiFi()
 
-        # self.__drone_wifi_name = "TELLO-C3A55B"
-        # self.__drone_wifi_password = None
+        self.__drone_wifi_name = "TELLO-C3A55B"
+        self.__drone_wifi_password = None
 
-        # self.drone_instance = Tello()
-        # try:
-        #     self.connect_to_tello(tries=wifi_connect_tries)
-        # except Exception as e:
-        #     print(e)
+        self.drone_instance = Tello()
+        try:
+            self.connect_to_tello(tries=wifi_connect_tries)
+        except Exception as e:
+            print(e)
 
-        # self.__serversocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # self.__serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.__serversocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.__serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        # self.__udp_thread = threading.Thread(target=self.run_udp_receiver)
-        # self.__udp_thread.daemon = True
-        # self.__udp_thread.start()
+        self.__udp_thread = threading.Thread(target=self.run_udp_receiver)
+        self.__udp_thread.daemon = True
+        self.__udp_thread.start()
 
-        # print(f"Battery: {self.drone_instance.get_battery()}%")
+        print(f"Battery: {self.drone_instance.get_battery()}%")
 
-        # # image processing
-        # self.__cap = cv2.VideoCapture(self.__udp_video_address)
-        # if not self.__cap.isOpened():
-        #     self.__cap.open(self.__udp_video_address)
+        # image processing
+        self.__cap = cv2.VideoCapture(self.__udp_video_address)
+        if not self.__cap.isOpened():
+            self.__cap.open(self.__udp_video_address)
 
-        # # self.__response = None
-        # # flight params
-        # self.pattern_done = False
-        # self.__row_size, self.__column_size = row_size, column_size
-        # self.__box_height, self.__box_width = box_height, box_width
-        # self.__shelf = shelf
-        # self.__speed = speed
+        # self.__response = None
+        # flight params
+        self.pattern_done = False
+        self.__row_size, self.__column_size = row_size, column_size
+        self.__box_height, self.__box_width = box_height, box_width
+        self.__shelf = shelf
+        self.__speed = speed
 
-        # self.__qr_records: List[DataLog] = []
-        # self.__at = ""
-        # self.__qr_text = ""
+        self.__qr_records: List[DataLog] = []
+        self.__at = ""
+        self.__qr_text = ""
 
     def position_data_log(self) -> None:
         try:
@@ -351,29 +352,43 @@ class TelloMain:
             "status": status,
             "station_name": "eagleEye",
         }
+        headers = {
+            'Authorization': f'Bearer {self.__access_token}',
+            'Content-Type': 'application/json',
+        }
+        try:
+            response = requests.post(url, json=payload, headers=headers)
+            if response.status_code == 403:
+                self.login_to_server()
+            headers['Authorization'] = f'Bearer {self.__access_token}'
+            response = requests.post(url, json=payload, headers=headers)
+            if response.status_code != 200:
+                raise Exception('Couldn\'t send data back to server')
+        except Exception as e:
+            print('Error at update_server(): ', e)
+
         
 
     def login_to_server(self) -> None:
-        url = self.__server + "login-station"
-        payload = {
-            "username": self.__station_name,
-            "password": "12345",
-        }
-        response = requests.post(url, json=payload)
-
         try:
+            url = self.__server + "login-station"
+            payload = {
+                "username": self.__station_name,
+                "password": self.__password,
+            }
+            response = requests.post(url, json=payload)
             if response.status_code == 200:
                 self.__access_token = response.json()["access_token"]
-                print(self.__access_token)
             else:
+                print(self.__response)
                 raise Exception("Login Failed")
         except Exception as e:
             print(e)
 
-    # def __del__(self):
-    #     self.__cap.release()
-    #     cv2.destroyAllWindows()
+    def __del__(self):
+        self.__cap.release()
+        cv2.destroyAllWindows()
 
 
-tello = TelloMain(row_size=3, column_size=2)
-tello.login_to_server()
+tello = TelloMain(row_size=2, column_size=3)
+tello.run()
