@@ -3,9 +3,24 @@
   <div class="overlay">
     <div class="input-container fade-in-top">
       <mat-icon class="user">account_box</mat-icon>
-      <input type="text" class="input-field" placeholder="Username" />
-      <input type="password" class="input-field" placeholder="Password" />
-      <input type="button" class="login-button" value="Login" />
+      <input
+        type="text"
+        class="input-field"
+        placeholder="Username"
+        [(ngModel)]="username"
+      />
+      <input
+        type="password"
+        class="input-field"
+        placeholder="Password"
+        [(ngModel)]="password"
+      />
+      <input
+        type="button"
+        class="login-button"
+        value="Login"
+        (click)="login()"
+      />
     </div>
   </div>
 </div>

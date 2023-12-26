@@ -27,6 +27,10 @@ export class AuthService {
     });
   }
 
+  getRequestOptions(headers?: HttpHeaders): {} {
+    return { headers: headers || this.getLoginHeaders() };
+  }
+
   login(username: string, password: string): Observable<any> {
     return this.apiService.loginUser(username, password).pipe(
       tap((response: any) => {
@@ -42,7 +46,7 @@ export class AuthService {
 
   logout() {
     sessionStorage.removeItem('access_token');
-    return this.apiService.logoutUser(this.getLoginHeaders()).pipe(
+    return this.apiService.logoutUser(this.getRequestOptions()).pipe(
       tap((response: any) => {
         this.accessToken = null;
         this._isLoggedIn.next(false);

@@ -12,19 +12,29 @@ import { Router } from '@angular/router';
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
-  stations: Station[] = [];
-  colDefs: ColDef[] = [];
-  stationname!: string;
+  stations!: any;
+  schedules!: any;
+  stationColDefs: ColDef[] = [];
+  schedulesColDefs: ColDef[] = [];
+  station_name!: string;
+  scheduleStationName!: string;
+  scheduleTime!: string;
 
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
     private sharedService: SharedService,
     private router: Router
-  ) {}
+  ) {
+    this.authService.isLoggedIn.subscribe((status: boolean) => {
+      if (status === false) {
+        router.navigate(['/login']);
+      }
+    });
+  }
 
   customButtonRenderer(params: ICellRendererParams) {
-    this.stationname = params.data?.stationname;
+    this.station_name = params.data?.station_name;
 
     const button = document.createElement('button');
     button.innerHTML = 'View Shelves';
@@ -34,9 +44,9 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.colDefs = [
+    this.stationColDefs = [
       {
-        field: 'stationname',
+        field: 'station_name',
         flex: 1,
         cellStyle: { textAlign: 'center' },
       },
@@ -46,20 +56,89 @@ export class DashboardComponent implements OnInit {
         cellStyle: { textAlign: 'center' },
       },
     ];
-    this.stations = this.apiService.getStations(
-      this.authService.getLoginHeaders()
-    );
+
+    this.schedulesColDefs = [
+      {
+        field: 'station_name',
+        flex: 1,
+        cellStyle: { textAlign: 'center' },
+      },
+      {
+        field: 'schedule_time',
+        flex: 1,
+        cellStyle: { textAlign: 'center' },
+      },
+    ];
+    this.getStationsData();
+    this.getSchedulesData();
+  }
+
+  getStationsData(): void {
+    this.apiService
+      .getStations(this.authService.getRequestOptions())
+      .subscribe((data: any) => {
+        this.stations = data;
+      });
+  }
+
+  getSchedulesData(): void {
+    this.apiService
+      .getSchedules(this.authService.getRequestOptions())
+      .subscribe((data: any) => {
+        this.schedules = data;
+      });
   }
 
   viewShelvesClick(params: any): void {
     try {
-      const stationname = params.data?.stationname;
-      console.log(stationname);
+      const station_name = params.data?.station_name;
       const regex = /[a-zA-Z]/;
-      if (regex.test(stationname)) {
-        this.sharedService.setStationName(stationname);
+      if (regex.test(station_name)) {
+        this.sharedService.setStationName(station_name);
         this.router.navigate(['dashboard/bins']);
       }
+    } catch {}
+  }
+
+  deleteRow(params: any): void {
+    try {
+      const userResponse = window.confirm('Do you want to delete this row?');
+      if (userResponse) {
+        this.apiService
+          .deleteSchedule(
+            params.data.schedule_time,
+            params.data.station_name,
+            this.authService.getRequestOptions()
+          )
+          .subscribe(
+            (res: any) => {
+              alert('Deleted row');
+              this.getSchedulesData();
+            },
+            (err: any) => {
+              alert(err);
+            }
+          );
+      }
+    } catch {}
+  }
+
+  addNewRow(): void {
+    try {
+      this.apiService
+        .addSchedule(
+          this.scheduleTime,
+          this.scheduleStationName,
+          this.authService.getRequestOptions()
+        )
+        .subscribe(
+          (res: any) => {
+            this.getSchedulesData();
+          },
+          (err: any) => {
+            alert(err);
+          }
+        );
     } catch {}
   }
 }

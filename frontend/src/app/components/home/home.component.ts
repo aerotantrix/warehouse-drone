@@ -9,8 +9,10 @@ import { AuthService } from 'src/app/shared/auth.service';
 })
 export class HomeComponent {
   constructor(private authService: AuthService, private router: Router) {
-    if (this.authService.isLoggedIn) {
-      router.navigate(['/dashboard']);
-    }
+    this.authService.isLoggedIn.subscribe((status: boolean) => {
+      if (status === true) {
+        router.navigate(['/dashboard']);
+      }
+    });
   }
 }

@@ -24,6 +24,18 @@ mat-toolbar {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.25rem;
+    transition: font-size 0.2s ease-in-out;
+    &:hover {
+      font-size: 2.1rem;
+    }
+  }
+  a {
+    margin-right: 1rem;
+    font-size: 1rem;
+    transition: font-size 0.2s ease-in-out;
+    &:hover {
+      font-size: 1.05rem;
+    }
   }
 }
 
@@ -41,5 +53,19 @@ mat-toolbar {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.25rem;
+    transition: font-size 0.2s ease-in-out;
+    &:hover {
+      font-size: 2.1rem;
+    }
+  }
+  .items-container {
+    margin-right: 1rem;
+    a {
+      font-size: 1rem;
+      transition: font-size 0.2s ease-in-out;
+      &:hover {
+        font-size: 1.05rem;
+      }
+    }
   }
 }

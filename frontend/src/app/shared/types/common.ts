@@ -1,9 +1,9 @@
 export class Station {
-  stationname!: string;
+  station_name!: string;
   battery!: number;
 
-  constructor(stationname: string, battery: number) {
-    this.stationname = stationname;
+  constructor(station_name: string, battery: number) {
+    this.station_name = station_name;
     this.battery = battery;
   }
 }
@@ -14,7 +14,7 @@ export class Bin {
   row!: number;
   rack!: number;
   shelf!: number;
-  present!: boolean;
+  status!: boolean;
 
   constructor(
     bin_id: string,
@@ -22,13 +22,23 @@ export class Bin {
     row: number,
     rack: number,
     shelf: number,
-    present: boolean
+    status: boolean
   ) {
     this.bin_id = bin_id;
     this.timestamp = timestamp;
     this.row = row;
     this.rack = rack;
     this.shelf = shelf;
-    this.present = present;
+    this.status = status;
+  }
+}
+
+export class GridBin {
+  bin_id!: string;
+  color!: string;
+  
+  constructor(bin_id: string, color: string) {
+    this.bin_id = bin_id;
+    this.color = color;
   }
 }

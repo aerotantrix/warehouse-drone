@@ -4,14 +4,14 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class SharedService {
-  stationname!: string;
+  station_name!: string;
   constructor() {}
 
-  setStationName(stationname: string): void {
-    this.stationname = stationname;
+  setStationName(station_name: string): void {
+    this.station_name = station_name;
   }
 
   getStationName(): string {
-    return this.stationname;
+    return this.station_name;
   }
 }

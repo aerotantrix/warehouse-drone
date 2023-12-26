@@ -1,7 +1,42 @@
 .dashboard-container {
   margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
   ag-grid-angular {
     padding: 3rem;
+  }
+  h2 {
+    padding-top: 1rem;
+    margin-left: 3rem;
+  }
+  .dashboard-button-div {
+    margin: 0rem 3rem;
+    display: flex;
+    justify-content: center;
+    .dashboard-text {
+      margin: 0rem 1rem;
+      border-radius: 0.5rem;
+      width: 12rem;
+      border: 3px solid black;
+      &:focus {
+        outline: none !important;
+        border: 3px solid #2196f3;
+      }
+    }
+    .dashboard-button {
+      margin: 0rem 1rem;
+      width: 12rem;
+      height: 3rem;
+      border: 2px solid #2196f3;
+      border-radius: 0.5rem;
+      background-color: #2196f3;
+      color: white;
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+      &:hover {
+        background-color: white;
+        color: #2196f3;
+      }
+    }
   }
 }
 ::ng-deep .view-shelves {

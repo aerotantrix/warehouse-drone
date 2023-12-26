@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AgGridModule } from 'ag-grid-angular';
 import { BinsComponent } from './components/dashboard/bins/bins.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { BinsComponent } from './components/dashboard/bins/bins.component';
     MatToolbarModule,
     MatIconModule,
     AgGridModule,
+    FormsModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

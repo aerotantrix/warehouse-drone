@@ -17,7 +17,7 @@ from fastapi import Depends, FastAPI, HTTPException, status, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 from typing import Dict, List
 from credentials import psql_credentials
 from datetime import datetime
@@ -193,6 +193,44 @@ async def login_station(
     return {"access_token": access_token}
 
 
+@app.post("/logout-user", tags=["Authentication"])
+@token_required
+async def logout_user(
+    session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+    token = dependencies
+    payload = auth_bearer.JWTBearer.decodeJWT(token)
+    username = payload["sub"]
+    token_record = session.query(models.TokenTable).all()
+    info = []
+    for record in token_record:
+        if (datetime.utcnow() - record.created_datetime).days > 1:
+            info.append(record.username)
+    if info:
+        existing_token = (
+            session.query(models.TokenTable)
+            .where(models.TokenTable.username.in_(info))
+            .delete()
+        )
+        session.commit()
+
+    existing_token = (
+        session.query(models.TokenTable)
+        .filter(
+            models.TokenTable.username == username,
+            models.TokenTable.access_token == token,
+        )
+        .first()
+    )
+    if existing_token:
+        existing_token.status = False
+        session.add(existing_token)
+        session.commit()
+        session.refresh(existing_token)
+    return {"message": "Logged out successfully"}
+
+
 @app.get(
     "/user_details/{username}", response_model=schemas.UserDetails, tags=["Details"]
 )
@@ -243,6 +281,19 @@ async def get_battery(
     return {"battery": station.battery}
 
 
+@app.get("/get-stations", tags=["Details"])
+@token_required
+async def get_stations(
+	session: Session = Depends(get_session),
+    dependencies=Depends(auth_bearer.JWTBearer()),
+):
+	try:
+		stations = session.query(models.RpiStation).options(defer(models.RpiStation.password)).all()
+		return stations
+	except Exception as e:
+		raise HTTPException(status_code=404, detail=f"{e}")
+
+
 @app.get("/bins/{station_name}")
 @token_required
 async def get_bin_details(
@@ -264,6 +315,17 @@ async def get_bin_details(
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"{e}")
 
+@app.get("/get-schedule")
+@token_required
+async def get_schedule(
+    session: Session = Depends(get_session),
+    dependencies = Depends(auth_bearer.JWTBearer()),
+):
+    try:
+        schedule_data = session.query(models.DroneSchedule).all()
+        return schedule_data
+    except Exception as e:
+        return HTTPException(status_code=400, detail=f"{e}")
 
 @app.get("/check-schedule/{station_name}/{battery}")
 @token_required
@@ -277,6 +339,7 @@ async def check_schedule(
         schedule_data = (
             session.query(models.DroneSchedule)
             .filter_by(station_name=station_name)
+            .filter(models.DroneSchedule.schedule_time >= datetime.now())
             .order_by(models.DroneSchedule.schedule_time)
             .first()
         )
@@ -286,13 +349,14 @@ async def check_schedule(
             .filter(models.RpiStation.station_name == station_name)
             .first()
         )
-        station.battery = battery
-        session.commit()
-        session.refresh(station)
+        if battery >= 0 and battery <= 100:
+            station.battery = battery
+            session.commit()
+            session.refresh(station)
 
         return {"schedule": schedule_data.schedule_time} if schedule_data else {}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{e}")
+        raise HTTPException(status_code=400, detail=f"{e}")
 
 
 @app.post("/add-bin")
@@ -311,6 +375,17 @@ async def bin_insert(
             status=request.status,
             station_name=request.station_name,
         )
+        existing_bin = (
+            session.query(models.Bin)
+            .filter_by(
+                row=request.row, 
+                rack=request.rack, 
+                shelf=request.shelf
+            )
+            .first()
+        )
+        if existing_bin is not None:
+            session.delete(existing_bin)
         session.add(new_bin)
         session.commit()
         session.refresh(new_bin)

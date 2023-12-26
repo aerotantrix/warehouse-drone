@@ -7,7 +7,7 @@ import { Bin, Station } from './types/common';
   providedIn: 'root',
 })
 export class ApiService {
-  baseUrl: string = 'http://192.168.1.110/';
+  baseUrl: string = 'http://192.168.192.50/';
 
   constructor(private httpClient: HttpClient) {}
 
@@ -23,50 +23,53 @@ export class ApiService {
   }
 
   registerStation(
-    stationname: string,
+    station_name: string,
     password: string,
     battery: number,
     headers: any
   ): Observable<any> {
     return this.httpClient.post(this.baseUrl + 'register-drone', {
-      stationname: stationname,
-      password: password,
-      battery: battery,
+      body: {
+        station_name: station_name,
+        password: password,
+        battery: battery,
+      },
       ...headers,
     });
   }
 
-  getBins(droneName: string, headers: any): Bin[] {
-    return [
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 0, 0, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 0, 1, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 0, 2, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 0, 3, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 0, 4, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 1, 0, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 1, 1, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 1, 2, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 1, 3, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 1, 4, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 2, 0, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 2, 1, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 2, 2, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 2, 4, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 2, 3, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 3, 0, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 3, 1, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 3, 2, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 3, 3, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 3, 4, 1, false),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 4, 0, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 4, 1, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 4, 2, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 4, 4, 1, true),
-      new Bin('fa34ra', new Date('2023-12-25 12:15:45'), 4, 3, 1, true),
-    ];
+  getBins(droneName: string, headers: any): Observable<any> {
+    return this.httpClient.get(this.baseUrl + `bins/${droneName}`, headers);
   }
 
-  getStations(headers: any): Station[] {
-    return [new Station('eagleEye', 69)];
+  getStations(headers: any): Observable<any> {
+    return this.httpClient.get(this.baseUrl + `get-stations`, headers);
+  }
+
+  getSchedules(headers: any): Observable<any> {
+    return this.httpClient.get(this.baseUrl + `get-schedule`, headers);
+  }
+
+  deleteSchedule(
+    schedule_time: any,
+    station_name: any,
+    headers: any
+  ): Observable<any> {
+    return this.httpClient.delete(this.baseUrl + `delete-schedule`, {
+      body: { schedule_time: schedule_time, station_name: station_name },
+      ...headers,
+    });
+  }
+
+  addSchedule(
+    schedule_time: any,
+    station_name: any,
+    headers: any
+  ): Observable<any> {
+    return this.httpClient.post(
+      this.baseUrl + `add-schedule`,
+      { schedule_time: schedule_time, station_name: station_name },
+      { ...headers }
+    );
   }
 }

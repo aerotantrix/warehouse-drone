@@ -1,13 +1,38 @@
 <div class="dashboard-container">
+  <h2>Stations</h2>
   <ag-grid-angular
     [rowData]="stations"
-    [columnDefs]="colDefs"
+    [columnDefs]="stationColDefs"
     class="ag-theme-quartz"
     style="height: 500px"
     rowSelection="single"
-    (cellClicked)="viewShelvesClick($event)"
-    (rowClicked)="viewShelvesClick($event)"
     (rowSelected)="viewShelvesClick($event)"
   >
   </ag-grid-angular>
+  <h2>Schedules</h2>
+  <div class="dashboard-button-div">
+    <input
+      type="text"
+      class="dashboard-text"
+      placeholder="Enter Station Name"
+      [(ngModel)]="scheduleStationName"
+    />
+    <input
+      type="text"
+      class="dashboard-text"
+      placeholder="Enter Schedule Time"
+      [(ngModel)]="scheduleTime"
+    />
+    <button class="dashboard-button" (click)="addNewRow()">
+      Add To Schedule
+    </button>
+  </div>
+  <ag-grid-angular
+    [rowData]="schedules"
+    [columnDefs]="schedulesColDefs"
+    class="ag-theme-quartz"
+    style="height: 500px"
+    rowSelection="single"
+    (rowSelected)="deleteRow($event)"
+  ></ag-grid-angular>
 </div>
